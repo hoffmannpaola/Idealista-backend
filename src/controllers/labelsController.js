@@ -16,14 +16,20 @@ router.post("/", async (req, res) => {
 
     } catch(error) {
         console.log(error);
-        return res.sendStatus(500)
+        return res.sendStatus(500);
     }
-
-
 })
 
 router.get("/", async (req, res) => {
-    
+    try {
+        const allLabels = await Labels.selectAllItems();
+        console.log(allLabels);
+        res.status(200).send(allLabels);
+
+    } catch(error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
 })
 
 module.exports = router;

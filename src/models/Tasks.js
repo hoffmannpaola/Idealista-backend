@@ -1,9 +1,11 @@
 const db = require("../database");
+const BaseModel = require('./BaseModel');
 
-class Tasks {
+class Tasks extends BaseModel {
+    static tableName = 'tasks';
 
     constructor(id, name, isChecked, labels) {
-        this.id = id;
+        super(id);
         this.name = name;
         this.isChecked = isChecked;
         this.labels = labels;
