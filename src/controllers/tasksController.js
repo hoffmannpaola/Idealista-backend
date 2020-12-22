@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
 
     } catch(error) {
         console.log(error);
-        return res.sendStatus(422)
+        return res.sendStatus(500)
     }
 
 });
