@@ -15,7 +15,7 @@ beforeAll(cleanDB);
 
 afterAll(async () => {
     await cleanDB();
-    db.end();
+   db.end();
 })
 
 
