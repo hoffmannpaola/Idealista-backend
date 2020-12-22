@@ -22,8 +22,7 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
     try {
-        const allLabels = await Labels.selectAllItems();
-        console.log(allLabels);
+        const allLabels = await Labels.findAll();
         res.status(200).send(allLabels);
 
     } catch(error) {
