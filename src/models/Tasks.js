@@ -28,8 +28,20 @@ class Tasks extends BaseModel {
 
         if (!task) return undefined;
 
-        const labels = Labels.findLabelsByTask(id);
+        const labels = await Labels.findLabelsByTask(id);
         return new Tasks(task.id, task.name, task.isChecked, labels);
+    }
+
+    static async findAll() {
+        const result = await super.findAll()
+        
+        const tasks = result.rows;
+        const allTasksPromise = tasks.map(async task => {
+            const labels = await Labels.findLabelsByTask(task.id);
+            return new Tasks(task.id, task.name, task.isChecked, labels);
+        });
+
+        return await Promise.all(allTasksPromise);
     }
 
     async save() {

@@ -181,7 +181,44 @@ describe('POST /tasks/:taskId/labels/:labelId', () => {
     });
 });
 
-/*describe("DELETE /tasks/:id", () => {
+describe('GET /tasks', () => {
+    it('should return 200, all tasks with labels', async () => {
+        const response = await agent.get('/tasks');
+
+        console.log(response.body, 'BODDDY');
+        expect(response.status).toBe(200);
+        expect(response.body.length).toBe(1);
+        expect(response.body[0]).toEqual(
+            expect.objectContaining({
+                name: "Comprar pão",
+                isChecked: true,
+                labels: [
+                    expect.objectContaining({
+                      color: '#AA0255'
+                    })
+                ],
+            })
+        );
+    });
+
+    it('should return 200, all tasks but one task without labels', async() => {
+        await db.query('INSERT INTO tasks (name, "isChecked") VALUES ($1, $2)', ['Comprar leite', false]);
+
+        const response = await agent.get('/tasks');
+
+        expect(response.status).toBe(200);
+        expect(response.body.length).toBe(2);
+        expect(response.body[1]).toEqual(
+            expect.objectContaining({
+                name: "Comprar leite",
+                isChecked: false,
+                labels: []
+            })
+        );
+    });
+});
+
+describe("DELETE /tasks/:id", () => {
     it('should return 404, not found id', async () => {
         const response = await agent.delete("/tasks/0");
 
@@ -194,4 +231,4 @@ describe('POST /tasks/:taskId/labels/:labelId', () => {
 
         expect(response.status).toBe(200);
     });
-});*/
+});

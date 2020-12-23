@@ -2,7 +2,7 @@ const db = require("../database");
 const BaseModel = require('./BaseModel');
 
 class TasksLabels extends BaseModel {
-    tableName = '"tasksLabels"';
+    tableName = `"tasksLabels"`;
 
     constructor(id, taskId, labelId) {
         super(id);

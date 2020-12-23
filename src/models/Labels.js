@@ -26,6 +26,8 @@ class Labels extends BaseModel {
         const query = 'SELECT l.id, l.color FROM labels AS l JOIN "tasksLabels" AS tl ON l.id = tl."labelId" WHERE tl."taskId" = $1';
         const labels = await db.query(query, [taskId]);
 
+        if(labels.length === 0) return [];
+
         return labels.rows.map(label => new Labels(label.id, label.color));
     }
 

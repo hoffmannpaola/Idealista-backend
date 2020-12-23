@@ -23,6 +23,14 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
+    try {
+        const allTasks = await Tasks.findAll();
+        return res.status(200).send(allTasks);
+
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
 });
 
 router.put("/:id", async (req, res) => {
