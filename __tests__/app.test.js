@@ -1,5 +1,6 @@
 const supertest = require("supertest");
 const app = require("../src/app");
+const agent = supertest(app);
 const db = require("../src/database");
 
 async function cleanDB() {
@@ -19,13 +20,15 @@ afterAll(async () => {
     db.end();
 })
 
+let idTask;
+
 describe("POST /tasks", () => {
     it("should return status 422, invalid params", async () => {
         const body = {
             name: " "
         };
 
-        const response = await supertest(app).post("/tasks").send(body);
+        const response = await agent.post("/tasks").send(body);
 
         expect(response.status).toBe(422);
     });
@@ -35,16 +38,18 @@ describe("POST /tasks", () => {
             name: "Comprar pão"
         };
 
-        const response = await supertest(app).post("/tasks").send(body);
+        const response = await agent.post("/tasks").send(body);
 
         expect(response.status).toBe(201);
-        expect(response.body).toMatchObject((
+        expect(response.body).toEqual((
             expect.objectContaining({
                 name: "Comprar pão",
                 isChecked: false,
                 labels: []
             })
         ));
+        
+        idTask = response.body.id;
     });
 });
 
@@ -54,7 +59,7 @@ describe("POST /labels", () => {
             color: "#6578"
         };
 
-        const response = await supertest(app).post("/labels").send(body);
+        const response = await agent.post("/labels").send(body);
 
         expect(response.status).toBe(422);
 
@@ -65,10 +70,10 @@ describe("POST /labels", () => {
             color: "#AA0255"
         };
 
-        const response = await supertest(app).post("/labels").send(body);
+        const response = await agent.post("/labels").send(body);
 
         expect(response.status).toBe(201);
-        expect(response.body).toMatchObject(
+        expect(response.body).toEqual(
             expect.objectContaining({
                 color: "#AA0255"
             })
@@ -80,7 +85,7 @@ describe("GET /labels", () => {
     it('should return every labels, status 200', async () => {
         await db.query("INSERT INTO labels (color) VALUES ('#434343')");
 
-        const response = await supertest(app).get("/labels");
+        const response = await agent.get("/labels");
 
         expect(response.status).toBe(200);
         expect(response.body.length).toBe(2);
@@ -89,5 +94,58 @@ describe("GET /labels", () => {
                 color: "#434343"
             })
         );
+    });
+});
+
+describe('PUT /tasks/:id', () => {
+    it('should return 422, invalid params', async () => {
+        const body = {
+            name: true
+        };
+    
+        const response = await agent.put(`/tasks/${idTask}`).send(body);
+    
+        expect(response.status).toBe(422);
+    });
+
+    it('should return 404, not found id', async () => {
+        const response = await agent.put("/tasks/0");
+
+        expect(response.status).toBe(404);
+    });
+
+    it('should return 200, OK save', async () => {
+        const body = {
+            isChecked: true
+        }
+
+        const response = await agent.put(`/tasks/${idTask}`).send(body);
+
+        const updated = await db.query(`SELECT * FROM tasks WHERE id = $1`, [idTask]);
+        const { id, name, isChecked} = updated.rows[0];
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(
+            expect.objectContaining({
+                id,
+                name,
+                isChecked,
+            })
+        );
+    });
+});
+
+describe("DELETE /tasks/:id", () => {
+    it('should return 404, not found id', async () => {
+        const response = await agent.delete("/tasks/0");
+
+        expect(response.status).toBe(404);
+    });
+
+    it('should return 200, delete task with valid id', async () => {
+
+        const response = await agent.delete(`/tasks/${idTask}`);
+
+        expect(response.status).toBe(200);
     });
 });

@@ -3,6 +3,7 @@ const BaseModel = require('./BaseModel');
 
 class Tasks extends BaseModel {
     static tableName = 'tasks';
+    tableName = 'tasks';
 
     constructor(id, name, isChecked, labels) {
         super(id);
@@ -12,16 +13,26 @@ class Tasks extends BaseModel {
     }
 
     static async createTask(name) {
-
-        const results = await db.query(`INSERT INTO tasks (name) VALUES ($1) RETURNING *`, [name]);
+        const query = `INSERT INTO tasks (name) VALUES ($1) RETURNING *`;
+        const results = await db.query(query, [name]);
 
         const task = results.rows[0];
 
-        return new Tasks (task.id, task.name, task.isChecked, []);
+        return new Tasks(task.id, task.name, task.isChecked, []);
+    }
 
+    static async findByPk(id) {
+        const result = await super.findByPk(id);
+        const task = result.rows[0];
+
+        if (!task) return undefined;
+        return new Tasks(task.id, task.name, task.isChecked);
+    }
+
+    async save() {
+        const query = `UPDATE tasks SET name = $1, "isChecked" = $2 WHERE id = $3`;
+        await db.query(query, [this.name, this.isChecked, this.id]);
     }
 }
-
-
 
 module.exports = Tasks;

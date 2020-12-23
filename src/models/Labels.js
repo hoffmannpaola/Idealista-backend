@@ -17,9 +17,9 @@ class Labels extends BaseModel {
         return new Labels (label.id, label.color);
     }
 
-    static async selectAllItems() {
-        const allLabels = await super.selectAllItems();
-        return allLabels.rows;
+    static async findAll() {
+        const allLabels = await super.findAll();
+        return allLabels.rows.map(label => new Labels(label.id, label.color));
     }
 }
 
