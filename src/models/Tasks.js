@@ -1,9 +1,9 @@
 const db = require("../database");
 const BaseModel = require('./BaseModel');
+const Labels = require('./Labels');
 
 class Tasks extends BaseModel {
     static tableName = 'tasks';
-    tableName = 'tasks';
 
     constructor(id, name, isChecked, labels) {
         super(id);
@@ -26,7 +26,21 @@ class Tasks extends BaseModel {
         const task = result.rows[0];
 
         if (!task) return undefined;
-        return new Tasks(task.id, task.name, task.isChecked);
+
+        const labels = await Labels.findLabelsByTask(id);
+        return new Tasks(task.id, task.name, task.isChecked, labels);
+    }
+
+    static async findAll() {
+        const result = await super.findAll()
+        
+        const tasks = result.rows;
+        const allTasksPromise = tasks.map(async task => {
+            const labels = await Labels.findLabelsByTask(task.id);
+            return new Tasks(task.id, task.name, task.isChecked, labels);
+        });
+
+        return await Promise.all(allTasksPromise);
     }
 
     async save() {

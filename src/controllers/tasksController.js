@@ -1,6 +1,8 @@
 const express = require("express");
 const tasksSchemas = require("../schemas/tasksSchemas");
 const Tasks = require("../models/Tasks");
+const Labels = require("../models/Labels");
+const TasksLabels = require("../models/TasksLabels");
 
 const router = express.Router();
 
@@ -21,7 +23,15 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-    
+    try {
+        const allTasks = await Tasks.findAll();
+
+        return res.status(200).send(allTasks);
+
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
 });
 
 router.put("/:id", async (req, res) => {
@@ -56,7 +66,13 @@ router.delete("/:id", async (req, res) => {
         const task = await Tasks.findByPk(id);
         if (!task) return res.sendStatus(404);
 
-        await task.destroy();
+        const tasksLabels = await TasksLabels.findByPk(id);
+
+        if (tasksLabels) {
+            await Promise.all(tasksLabels.map(async taskLabel => await TasksLabels.destroy(taskLabel.id)));
+        }
+
+        await Tasks.destroy(task.id);
         return res.sendStatus(200);
 
     } catch(error) {
@@ -66,7 +82,27 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.post("/:taskId/labels/:labelId", async (req, res) => {
-    
+    try {
+        const taskId = parseInt(req.params.taskId);
+        const labelId = parseInt(req.params.labelId)
+
+        const task = await Tasks.findByPk(taskId);
+        const label = await Labels.findByPk(labelId);
+        if(!task || !label) return res.sendStatus(404);
+
+        const taskLabel = await TasksLabels.findByLabelAndTask(labelId, taskId);
+
+        if (taskLabel) await TasksLabels.destroy(taskLabel.id);
+        else await TasksLabels.createTaskLabel(labelId, taskId);
+
+        const labelsInTask = await Labels.findLabelsByTask(taskId);
+
+        return res.status(200).send(labelsInTask);
+
+    } catch(error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
 });
 
 module.exports = router;

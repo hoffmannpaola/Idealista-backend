@@ -21,6 +21,23 @@ class Labels extends BaseModel {
         const allLabels = await super.findAll();
         return allLabels.rows.map(label => new Labels(label.id, label.color));
     }
+
+    static async findLabelsByTask(taskId) {
+        const query = 'SELECT l.id, l.color FROM labels AS l JOIN "tasksLabels" AS tl ON l.id = tl."labelId" WHERE tl."taskId" = $1';
+        const labels = await db.query(query, [taskId]);
+
+        if(labels.length === 0) return [];
+
+        return labels.rows.map(label => new Labels(label.id, label.color));
+    }
+
+    static async findByPk(id) {
+        const result = await super.findByPk(id);
+        const label = result.rows[0];
+
+        if (!label) return undefined;
+        return new Labels(label.id, label.color);
+    }
 }
 
 module.exports = Labels;
