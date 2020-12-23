@@ -5,6 +5,7 @@ const db = require("../src/database");
 
 async function cleanDB() {
     try {
+        await db.query('DELETE FROM "tasksLabels"');
         await db.query('DELETE FROM labels');
         await db.query('DELETE FROM tasks');
 
@@ -20,7 +21,9 @@ afterAll(async () => {
     db.end();
 })
 
-let idTask;
+let taskId;
+let firstLabelId;
+let secondLabelId;
 
 describe("POST /tasks", () => {
     it("should return status 422, invalid params", async () => {
@@ -49,7 +52,7 @@ describe("POST /tasks", () => {
             })
         ));
         
-        idTask = response.body.id;
+        taskId = response.body.id;
     });
 });
 
@@ -78,22 +81,26 @@ describe("POST /labels", () => {
                 color: "#AA0255"
             })
         );
+
+        firstLabelId = response.body.id;
     });
 });
 
 describe("GET /labels", () => {
     it('should return every labels, status 200', async () => {
-        await db.query("INSERT INTO labels (color) VALUES ('#434343')");
+        await db.query("INSERT INTO labels (color) VALUES ($1)", ['#434343']);
 
         const response = await agent.get("/labels");
 
         expect(response.status).toBe(200);
         expect(response.body.length).toBe(2);
-        expect(response.body[1]).toMatchObject(
+        expect(response.body[1]).toEqual(
             expect.objectContaining({
                 color: "#434343"
             })
         );
+
+        secondLabelId = response.body[1].id;
     });
 });
 
@@ -103,7 +110,7 @@ describe('PUT /tasks/:id', () => {
             name: true
         };
     
-        const response = await agent.put(`/tasks/${idTask}`).send(body);
+        const response = await agent.put(`/tasks/${taskId}`).send(body);
     
         expect(response.status).toBe(422);
     });
@@ -119,9 +126,9 @@ describe('PUT /tasks/:id', () => {
             isChecked: true
         }
 
-        const response = await agent.put(`/tasks/${idTask}`).send(body);
+        const response = await agent.put(`/tasks/${taskId}`).send(body);
 
-        const updated = await db.query(`SELECT * FROM tasks WHERE id = $1`, [idTask]);
+        const updated = await db.query(`SELECT * FROM tasks WHERE id = $1`, [taskId]);
         const { id, name, isChecked} = updated.rows[0];
 
         expect(response.status).toBe(200);
@@ -135,7 +142,46 @@ describe('PUT /tasks/:id', () => {
     });
 });
 
-describe("DELETE /tasks/:id", () => {
+describe('POST /tasks/:taskId/labels/:labelId', () => {
+    it('should return 404, not found taskId', async () => {
+        const response = await agent.post(`/tasks/0/labels/${firstLabelId}`);
+
+        expect(response.status).toBe(404);
+    });
+
+    it('should return 404, not found labelId', async () => {
+        const response = await agent.post(`/tasks/${taskId}/labels/0`);
+
+        expect(response.status).toBe(404);
+    });
+
+    it('should return labels in the task and status 200 with valid ids', async () => {
+        await db.query('INSERT INTO "tasksLabels" ("labelId", "taskId") VALUES ($1, $2)', [firstLabelId, taskId]);
+        const response = await agent.post(`/tasks/${taskId}/labels/${secondLabelId}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.length).toBe(2);
+        expect(response.body[1]).toEqual(
+            expect.objectContaining({
+                color: "#434343"
+            })
+        );
+    });
+
+    it('should return 200 and the list, but the label exist', async () => {
+        const response = await agent.post(`/tasks/${taskId}/labels/${secondLabelId}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.length).toBe(1);
+        expect(response.body[0]).toEqual(
+            expect.objectContaining({
+                color: "#AA0255"
+            })
+        );
+    });
+});
+
+/*describe("DELETE /tasks/:id", () => {
     it('should return 404, not found id', async () => {
         const response = await agent.delete("/tasks/0");
 
@@ -144,8 +190,8 @@ describe("DELETE /tasks/:id", () => {
 
     it('should return 200, delete task with valid id', async () => {
 
-        const response = await agent.delete(`/tasks/${idTask}`);
+        const response = await agent.delete(`/tasks/${taskId}`);
 
         expect(response.status).toBe(200);
     });
-});
+});*/

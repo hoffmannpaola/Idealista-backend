@@ -1,5 +1,6 @@
 const db = require("../database");
 const BaseModel = require('./BaseModel');
+const Labels = require('./Labels');
 
 class Tasks extends BaseModel {
     static tableName = 'tasks';
@@ -26,7 +27,9 @@ class Tasks extends BaseModel {
         const task = result.rows[0];
 
         if (!task) return undefined;
-        return new Tasks(task.id, task.name, task.isChecked);
+
+        const labels = Labels.findLabelsByTask(id);
+        return new Tasks(task.id, task.name, task.isChecked, labels);
     }
 
     async save() {

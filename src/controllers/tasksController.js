@@ -1,6 +1,8 @@
 const express = require("express");
 const tasksSchemas = require("../schemas/tasksSchemas");
 const Tasks = require("../models/Tasks");
+const Labels = require("../models/Labels");
+const TasksLabels = require("../models/TasksLabels");
 
 const router = express.Router();
 
@@ -21,7 +23,6 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-    
 });
 
 router.put("/:id", async (req, res) => {
@@ -66,7 +67,27 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.post("/:taskId/labels/:labelId", async (req, res) => {
-    
+    try {
+        const taskId = parseInt(req.params.taskId);
+        const labelId = parseInt(req.params.labelId)
+
+        const task = await Tasks.findByPk(taskId);
+        const label = await Labels.findByPk(labelId);
+        if(!task || !label) return res.sendStatus(404);
+
+        const taskLabel = await TasksLabels.findByPk(labelId, taskId);
+
+        if (taskLabel) await taskLabel.destroy();
+        else await TasksLabels.createTaskLabel(labelId, taskId);
+
+        const labelsInTask = await Labels.findLabelsByTask(taskId);
+
+        return res.status(200).send(labelsInTask);
+
+    } catch(error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
 });
 
 module.exports = router;

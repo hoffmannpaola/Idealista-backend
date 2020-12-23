@@ -14,7 +14,4 @@ app.use("/tasks", tasksController);
 
 app.use("/labels", labelsController);
 
-
-
-
 module.exports = app;
