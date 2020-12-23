@@ -4,7 +4,6 @@ const Labels = require('./Labels');
 
 class Tasks extends BaseModel {
     static tableName = 'tasks';
-    tableName = 'tasks';
 
     constructor(id, name, isChecked, labels) {
         super(id);

@@ -185,7 +185,6 @@ describe('GET /tasks', () => {
     it('should return 200, all tasks with labels', async () => {
         const response = await agent.get('/tasks');
 
-        console.log(response.body, 'BODDDY');
         expect(response.status).toBe(200);
         expect(response.body.length).toBe(1);
         expect(response.body[0]).toEqual(

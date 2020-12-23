@@ -25,6 +25,7 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
     try {
         const allTasks = await Tasks.findAll();
+
         return res.status(200).send(allTasks);
 
     } catch (error) {
@@ -65,7 +66,13 @@ router.delete("/:id", async (req, res) => {
         const task = await Tasks.findByPk(id);
         if (!task) return res.sendStatus(404);
 
-        await task.destroy();
+        const tasksLabels = await TasksLabels.findByPk(id);
+
+        if (tasksLabels) {
+            await Promise.all(tasksLabels.map(async taskLabel => await TasksLabels.destroy(taskLabel.id)));
+        }
+
+        await Tasks.destroy(task.id);
         return res.sendStatus(200);
 
     } catch(error) {
@@ -83,9 +90,9 @@ router.post("/:taskId/labels/:labelId", async (req, res) => {
         const label = await Labels.findByPk(labelId);
         if(!task || !label) return res.sendStatus(404);
 
-        const taskLabel = await TasksLabels.findByPk(labelId, taskId);
+        const taskLabel = await TasksLabels.findByLabelAndTask(labelId, taskId);
 
-        if (taskLabel) await taskLabel.destroy();
+        if (taskLabel) await TasksLabels.destroy(taskLabel.id);
         else await TasksLabels.createTaskLabel(labelId, taskId);
 
         const labelsInTask = await Labels.findLabelsByTask(taskId);
