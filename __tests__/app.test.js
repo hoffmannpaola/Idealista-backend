@@ -97,8 +97,46 @@ describe("GET /labels", () => {
     });
 });
 
+describe('PUT /tasks/:id', () => {
+    it('should return 422, invalid params', async () => {
+        const body = {
+            name: true
+        };
+    
+        const response = await agent.put(`/tasks/${idTask}`).send(body);
+    
+        expect(response.status).toBe(422);
+    });
+
+    it('should return 404, not found id', async () => {
+        const response = await agent.put("/tasks/0");
+
+        expect(response.status).toBe(404);
+    });
+
+    it('should return 200, OK save', async () => {
+        const body = {
+            isChecked: true
+        }
+
+        const response = await agent.put(`/tasks/${idTask}`).send(body);
+
+        const updated = await db.query(`SELECT * FROM tasks WHERE id = $1`, [idTask]);
+        const { id, name, isChecked} = updated.rows[0];
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(
+            expect.objectContaining({
+                id,
+                name,
+                isChecked,
+            })
+        );
+    });
+});
+
 describe("DELETE /tasks/:id", () => {
-    it('should return 404, invalid id', async () => {
+    it('should return 404, not found id', async () => {
         const response = await agent.delete("/tasks/0");
 
         expect(response.status).toBe(404);

@@ -19,7 +19,6 @@ class BaseModel {
     destroy() {
         return db.query(`DELETE FROM ${this.tableName} WHERE id = $1`, [this.id]);
     }
-
 }
 
 module.exports = BaseModel;
